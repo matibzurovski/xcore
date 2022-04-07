@@ -68,6 +68,19 @@ extension Pond {
     }
 
     private var isMainBundleSetKey: PondKey {
-        .init(id: #function, storage: .userDefaults, duration: .permanent)
+        userDefaultsKey(#function)
+    }
+}
+
+extension Pond {
+    /// Returns ``PondKey`` instance with ``UserDefaults`` storage and duration set
+    /// to `.session`.
+    public func userDefaultsKey(
+        _ key: String,
+        duration: PondKey.PersistenceDuration = .permanent,
+        dropKeySuffix: Bool = true
+    ) -> Key {
+        let key = dropKeySuffix ? key.droppingSuffix("Key") : key
+        return PondKey(id: key, storage: .userDefaults, duration: duration)
     }
 }
