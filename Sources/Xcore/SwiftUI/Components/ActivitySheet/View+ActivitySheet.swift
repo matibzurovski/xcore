@@ -120,6 +120,9 @@ private struct ActivitySheetView: UIViewControllerRepresentable {
             onComplete: onComplete,
             onDismiss: onDismiss
         )
+        .apply {
+            $0.presentIfNeeded()
+        }
     }
 
     func updateUIViewController(
@@ -127,7 +130,11 @@ private struct ActivitySheetView: UIViewControllerRepresentable {
         context: Context
     ) {
         uiViewController.isPresented = isPresented
-        uiViewController.presentIfNeeded()
+
+        // Fixes an issue where sometimes sheet wouldn't be displayed.
+        DispatchQueue.main.async {
+            uiViewController.presentIfNeeded()
+        }
     }
 }
 
@@ -171,10 +178,12 @@ private final class ActivitySheetViewPresenter: UIViewController {
     fileprivate func presentIfNeeded() {
         let isShown = presentedViewController != nil
 
-        guard !isShown, isShown != isPresented.wrappedValue else {
-            return
+        if isShown != isPresented.wrappedValue {
+            isPresented.wrappedValue ? showSheet() : hideSheet()
         }
+    }
 
+    private func showSheet() {
         let vc = UIActivityViewController(
             activityItems: items,
             applicationActivities: activities
@@ -197,5 +206,10 @@ private final class ActivitySheetViewPresenter: UIViewController {
         }
 
         present(vc, animated: true)
+    }
+
+    private func hideSheet() {
+        dismiss(animated: true)
+        removeFromParent()
     }
 }
