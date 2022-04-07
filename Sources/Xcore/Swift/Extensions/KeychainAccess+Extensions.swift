@@ -38,9 +38,10 @@ extension KeychainAccess.Keychain {
         accessibility: Accessibility = .whenUnlockedThisDeviceOnly,
         policy: AuthenticationPolicy = .none
     ) -> Keychain {
-        @Dependency(\.pond) var pond
+        let usedMainKey = "usedMainKey"
+        let usedMain = UserDefaults.standard.bool(forKey: usedMainKey)
 
-        if pond.isMainBundleSet {
+        if usedMain {
             return Keychain(
                 service: (Bundle.app.bundleIdentifier ?? "").replacing(".intents", with: ""),
                 accessGroup: accessGroup
@@ -48,7 +49,7 @@ extension KeychainAccess.Keychain {
             .accessibility(accessibility)
             .policy(policy)
         } else {
-            pond.isMainBundleSet = true
+            UserDefaults.standard.set(true, forKey: usedMainKey)
             return Keychain(
                 service: (Bundle.main.bundleIdentifier ?? "").replacing(".intents", with: ""),
                 accessGroup: accessGroup
@@ -56,31 +57,5 @@ extension KeychainAccess.Keychain {
             .accessibility(accessibility)
             .policy(policy)
         }
-    }
-}
-
-
-extension Pond {
-    /// A boolean property indicating whether the main Bundle was used at least once.
-    public var isMainBundleSet: Bool {
-        get { `get`(isMainBundleSetKey, default: false) }
-        nonmutating set { try? set(isMainBundleSetKey, value: newValue) }
-    }
-
-    private var isMainBundleSetKey: PondKey {
-        userDefaultsKey(#function)
-    }
-}
-
-extension Pond {
-    /// Returns ``PondKey`` instance with ``UserDefaults`` storage and duration set
-    /// to `.session`.
-    public func userDefaultsKey(
-        _ key: String,
-        duration: PondKey.PersistenceDuration = .permanent,
-        dropKeySuffix: Bool = true
-    ) -> Key {
-        let key = dropKeySuffix ? key.droppingSuffix("Key") : key
-        return PondKey(id: key, storage: .userDefaults, duration: duration)
     }
 }
