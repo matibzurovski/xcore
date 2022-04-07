@@ -38,11 +38,36 @@ extension KeychainAccess.Keychain {
         accessibility: Accessibility = .whenUnlockedThisDeviceOnly,
         policy: AuthenticationPolicy = .none
     ) -> Keychain {
-        Keychain(
-            service: (Bundle.main.bundleIdentifier ?? "").replacing(".intents", with: ""),
-            accessGroup: accessGroup
-        )
-        .accessibility(accessibility)
-        .policy(policy)
+        @Dependency(\.pond) var pond
+
+        if pond.isMainBundleSet {
+            return Keychain(
+                service: (Bundle.app.bundleIdentifier ?? "").replacing(".intents", with: ""),
+                accessGroup: accessGroup
+            )
+            .accessibility(accessibility)
+            .policy(policy)
+        } else {
+            pond.isMainBundleSet = true
+            return Keychain(
+                service: (Bundle.main.bundleIdentifier ?? "").replacing(".intents", with: ""),
+                accessGroup: accessGroup
+            )
+            .accessibility(accessibility)
+            .policy(policy)
+        }
+    }
+}
+
+
+extension Pond {
+    /// A boolean property indicating whether the main Bundle was used at least once.
+    public var isMainBundleSet: Bool {
+        get { `get`(isMainBundleSetKey, default: false) }
+        nonmutating set { try? set(isMainBundleSetKey, value: newValue) }
+    }
+
+    private var isMainBundleSetKey: PondKey {
+        .init(id: #function, storage: .userDefaults, duration: .permanent)
     }
 }
